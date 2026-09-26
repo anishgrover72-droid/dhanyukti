@@ -1,0 +1,18 @@
+# deps / builds
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# secrets — sponsor keys live only in api/.env
+.env
+.env.*
+!.env.example
+# os / editor
+.DS_Store
+.vscode/
