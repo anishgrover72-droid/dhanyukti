@@ -98,8 +98,8 @@ export default function Onboarding() {
 
           {step === "splash" && (<>
             <div className="flex justify-between items-center gap-2 pt-5"><p className="text-sm font-bold text-muted flex-1">{"// DhanYukti"}</p><HelpLink compact /><LangToggle /></div>
-            <h1 className="mt-6 text-[44px] font-extrabold leading-[1.02] tracking-tight">{lang === "hi" ? <>Ghar ka paisa,<br /><span className="text-clay">ab bina tension</span></> : <>Your family&apos;s money,<br /><span className="text-clay">without the worry</span></>}</h1>
-            <p className="mt-3 text-[16px] text-muted">{t({ hi: "Paisa kam padne se pehle hum batayenge. Aapki bhasha mein.", en: "We tell you before money runs short. In your language." })}</p>
+            <h1 className="mt-6 text-[44px] font-extrabold leading-[1.02] tracking-tight">{lang === "hi" ? <>Paisa kam padne se pehle,<br /><span className="text-clay">pata chal jaaye</span></> : <>Know before your<br /><span className="text-clay">money runs short</span></>}</h1>
+            <p className="mt-3 text-[16px] text-muted">{t({ hi: "Roz ek aasaan kaam, aapki bhasha mein.", en: "One simple step a day, in your language." })}</p>
             <div className="flex-1 grid place-items-center"><HomeScene size={240} /></div>
             <Btn variant="ink" className="w-full" onClick={() => go("language")}>{lang === "hi" ? "Shuru karein →" : "Get started →"}</Btn>
             <div className="mt-4"><DemoHouseholds compact /></div>
