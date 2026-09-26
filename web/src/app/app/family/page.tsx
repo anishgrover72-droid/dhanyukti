@@ -6,6 +6,10 @@ import { Eye, Target, Hourglass, ShieldOff, Check, RefreshCcw, Plug } from "luci
 import TopBar from "@/components/TopBar";
 import Enrich from "@/components/Enrich";
 import ConsentReceipt from "@/components/ConsentReceipt";
+import DeclaredEntry from "@/components/extras/DeclaredEntry";
+import BsaUpload from "@/components/extras/BsaUpload";
+import PrivacyControls from "@/components/extras/PrivacyControls";
+import DataSource from "@/components/home/DataSource";
 import InstallButton from "@/components/InstallButton";
 import Avatar from "@/components/art/Avatar";
 import Sheet from "@/components/ui/Sheet";
@@ -14,6 +18,11 @@ import { useApp, type Mode } from "@/lib/store";
 import { api } from "@/lib/api";
 import { day, inr } from "@/lib/format";
 import type { Capability, ConsentArtefact, DpdpGrant, HouseholdSummary, Member } from "@/lib/types";
+
+const TABS = [
+  { k: "family", hi: "Parivaar", en: "Family" }, { k: "consent", hi: "Consent", en: "Consent" },
+  { k: "data", hi: "Data", en: "Data" }, { k: "settings", hi: "Settings", en: "Settings" },
+] as const;
 
 const SHARE: { k: Member["sharing"]; hi: string; en: string }[] = [
   { k: "poora", hi: "Poora", en: "Full" }, { k: "sirf_total", hi: "Sirf total", en: "Totals" }, { k: "private", hi: "Sirf mere liye", en: "Private" },
@@ -29,11 +38,19 @@ export default function Family() {
   const [revoke, setRevoke] = useState<ConsentArtefact | null>(null);
   const [revoked, setRevoked] = useState<string[] | null>(null);
   const [receipt, setReceipt] = useState<ConsentArtefact | null>(null);
+  const [tab, setTab] = useState<(typeof TABS)[number]["k"]>("family");
 
   useEffect(() => { api.households().then(setHomes).catch(() => {}); api.capabilities().then(setCaps).catch(() => {}); }, []);
   useEffect(() => { api.passport(hid).then(setPass).catch(() => {}); }, [hid, consentHandle]);
 
   if (!data) return <div className="p-5 space-y-4"><Skeleton h={200} /><Skeleton h={300} /></div>;
+
+  // Household Consent Bundle: each earning adult consents for their own accounts.
+  const askConsent = async (memberId: string) => {
+    const r = await api.aaStart(hid, memberId, "9999999999");
+    if (r.mode === "live" && r.redirect_url.startsWith("http")) window.open(r.redirect_url, "_blank");
+    else router.push(`/anumati?handle=${encodeURIComponent(r.consent_handle)}&mobile=9999999999&return=/app/family`);
+  };
 
   const doRevoke = async () => {
     if (!revoke) return;
@@ -47,6 +64,12 @@ export default function Family() {
     <div>
       <TopBar title={lang === "hi" ? "Parivaar" : "Family"} speakText={{ hi: "Yahan parivaar ke sadasya, consent aur privacy hai. Consent kabhi bhi band kar sakte hain.", en: "Family members, consents and privacy. You can revoke consent anytime." }} />
 
+      <div className="mx-5 lg:mx-0 mt-3 grid grid-cols-4 rounded-full bg-white p-1 shadow-soft">
+        {TABS.map((x) => (
+          <button key={x.k} onClick={() => setTab(x.k)} className={`min-h-11 rounded-full text-[13px] font-bold ${tab === x.k ? "bg-ink text-white" : "text-muted"}`}>{lang === "hi" ? x.hi : x.en}</button>
+        ))}
+      </div>
+      {tab === "family" && (<>
       <SectionTitle v={{ hi: "Demo parivaar badlein", en: "Switch demo household" }} />
       <div className="flex gap-3 overflow-x-auto no-scrollbar px-5">
         {homes.map((h) => (
@@ -82,6 +105,8 @@ export default function Family() {
         })}
       </div>
 
+      </>)}
+      {tab === "consent" && (<>
       <SectionTitle v={{ hi: "Consent Passport", en: "Consent Passport" }} right={<span className="text-[11px] font-bold text-muted">AA + DPDP</span>} />
       <div className="mx-5 lg:mx-0 space-y-3">
         {!pass && <Skeleton h={180} />}
@@ -118,21 +143,23 @@ export default function Family() {
             {pass.dpdp.map((g) => <DpdpRow key={g.key} g={g} />)}
           </div>
         )}
+        {pass && data.household.members.filter((m) => m.earner && !pass.aa.some((c) => c.member_id === m.id && c.status === "ACTIVE")).map((m) => (
+          <div key={m.id} className="flex items-center gap-3 rounded-[24px] bg-white p-4 shadow-soft">
+            <Avatar kind={m.avatar} size={40} />
+            <div className="flex-1"><p className="font-bold">{m.name}</p><p className="text-xs text-muted">{t({ hi: "Inke khaate abhi jude nahi", en: "Accounts not linked yet" })}</p></div>
+            <button onClick={() => askConsent(m.id)} className="rounded-full bg-ink text-white px-4 min-h-11 text-sm font-bold">{lang === "hi" ? "Consent maangein" : "Ask consent"}</button>
+          </div>
+        ))}
       </div>
 
+      </>)}
+      {tab === "data" && (<>
       <SectionTitle v={{ hi: "Aur jaankari jodein", en: "Add more context" }} right={<span className="text-[11px] font-bold text-muted">Perfios Hub</span>} />
       <Enrich />
 
-      <SectionTitle v={{ hi: "Aasaan / Saathi / Pro", en: "Literacy mode" }} />
-      <div className="mx-5 lg:mx-0 grid grid-cols-3 gap-2">
-        {([["aasaan", "🎧", "Aasaan", "Voice + pictures"], ["saathi", "🤝", "Saathi", "Short text + cards"], ["pro", "📊", "Pro", "Full dashboard"]] as const).map(([k, e, n, d]) => (
-          <button key={k} onClick={() => setMode(k as Mode)} className={`rounded-[24px] p-3 text-center ${mode === k ? "bg-haldi" : "bg-white"}`}>
-            <p className="text-2xl">{e}</p><p className="font-extrabold text-sm">{n}</p><p className="text-[11px] text-muted leading-tight">{d}</p>
-          </button>
-        ))}
-      </div>
-      <p className="mx-5 lg:mx-0 mt-2 text-[11px] text-muted">{t({ hi: "Mode badalne se paison ka hisaab nahi badalta", en: "Switching mode never changes a financial result" })}</p>
-
+      <SectionTitle v={{ hi: "Cash aur udhaar", en: "Cash & informal loans" }} />
+      <div className="mx-5 lg:mx-0 lg:grid lg:grid-cols-2 lg:gap-4 space-y-3 lg:space-y-0"><DeclaredEntry /><BsaUpload /></div>
+      <div className="mt-6"><DataSource /></div>
       <SectionTitle v={{ hi: "Sponsor integration", en: "Sponsor integration" }} right={<Plug size={16} className="text-muted" />} />
       <div className="mx-5 lg:mx-0 rounded-[28px] bg-white p-2 shadow-soft">
         {caps.map((c, i) => (
@@ -144,10 +171,25 @@ export default function Family() {
         ))}
       </div>
 
+      </>)}
+      {tab === "settings" && (<>
+      <SectionTitle v={{ hi: "Aasaan / Saathi / Pro", en: "Literacy mode" }} />
+      <div className="mx-5 lg:mx-0 grid grid-cols-3 gap-2">
+        {([["aasaan", "🎧", "Aasaan", "Voice + pictures"], ["saathi", "🤝", "Saathi", "Short text + cards"], ["pro", "📊", "Pro", "Full dashboard"]] as const).map(([k, e, n, d]) => (
+          <button key={k} onClick={() => setMode(k as Mode)} className={`rounded-[24px] p-3 text-center ${mode === k ? "bg-haldi" : "bg-white"}`}>
+            <p className="text-2xl">{e}</p><p className="font-extrabold text-sm">{n}</p><p className="text-[11px] text-muted leading-tight">{d}</p>
+          </button>
+        ))}
+      </div>
+      <p className="mx-5 lg:mx-0 mt-2 text-[11px] text-muted">{t({ hi: "Mode badalne se paison ka hisaab nahi badalta", en: "Switching mode never changes a financial result" })}</p>
+
+      <SectionTitle v={{ hi: "Mera data", en: "My data" }} />
+      <div className="mx-5 lg:mx-0"><PrivacyControls /></div>
       <div className="mx-5 lg:mx-0 mt-6">
         <button onClick={() => { setOnboarded(false); router.push("/"); }} className="w-full min-h-12 rounded-[20px] bg-white/60 font-semibold text-sm flex items-center justify-center gap-2"><RefreshCcw size={16} />{lang === "hi" ? "Demo: onboarding dobara" : "Demo: restart onboarding"}</button>
       </div>
       <InstallButton />
+      </>)}
       <HelpLink />
       <ConsentReceipt c={receipt} onClose={() => setReceipt(null)} />
 

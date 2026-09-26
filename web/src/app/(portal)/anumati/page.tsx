@@ -21,6 +21,8 @@ export default function AnumatiSim() {
   const approve = async () => {
     setBusy(true);
     try { await api.aaApproveSandbox(handle); } catch { /* live mode handles this at Anumati */ }
+    const ret = new URLSearchParams(location.search).get("return");
+    if (ret?.startsWith("/app")) { try { await api.aaFetch(handle); } catch { /* shown on return */ } router.replace(ret); return; }
     router.replace(`/?step=connect&handle=${encodeURIComponent(handle)}`);
   };
 

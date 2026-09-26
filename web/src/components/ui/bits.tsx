@@ -1,4 +1,6 @@
 "use client";
+import { useState } from "react";
+import HelpSheet from "@/components/extras/HelpSheet";
 import { Volume2, VolumeX, CircleCheck, CircleAlert, OctagonAlert, LifeBuoy } from "lucide-react";
 import { useApp } from "@/lib/store";
 import type { Confidence, L, Status } from "@/lib/types";
@@ -65,17 +67,21 @@ export function SectionTitle({ v, right }: { v: L; right?: React.ReactNode }) {
 
 export function HelpLink({ compact }: { compact?: boolean }) {
   const { t, lang } = useApp();
-  if (compact) return (
-    <a href="tel:1800000000" className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 min-h-11 text-xs font-bold shadow-soft">
-      <LifeBuoy size={16} />{lang === "hi" ? "Madad chahiye?" : "Need help?"}
-    </a>
-  );
+  const [open, setOpen] = useState(false);
   return (
-    <a href="tel:1800000000" className="mx-5 lg:mx-0 mt-8 flex items-center gap-3 rounded-[24px] bg-white/70 border border-white px-4 py-3 min-h-14">
-      <span className="grid place-items-center h-10 w-10 rounded-full bg-lav"><LifeBuoy size={20} /></span>
-      <span className="flex-1 text-sm font-semibold">{t({ hi: "Madad chahiye? Bank mitra se baat karein", en: "Need help? Talk to a bank mitra" })}</span>
-      <span className="text-xs text-muted">1800-000-000</span>
-    </a>
+    <>
+      {compact ? (
+        <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 min-h-11 text-xs font-bold shadow-soft">
+          <LifeBuoy size={16} />{lang === "hi" ? "Madad chahiye?" : "Need help?"}
+        </button>
+      ) : (
+        <button onClick={() => setOpen(true)} className="mx-5 lg:mx-0 mt-8 w-[calc(100%-2.5rem)] lg:w-full flex items-center gap-3 rounded-[24px] bg-white/70 border border-white px-4 py-3 min-h-14 text-left">
+          <span className="grid place-items-center h-10 w-10 rounded-full bg-lav"><LifeBuoy size={20} /></span>
+          <span className="flex-1 text-sm font-semibold">{t({ hi: "Madad chahiye? Bank mitra se baat karein", en: "Need help? Talk to a bank mitra" })}</span>
+        </button>
+      )}
+      <HelpSheet open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }
 

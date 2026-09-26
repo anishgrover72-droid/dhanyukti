@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import TopBar from "@/components/TopBar";
 import JarsRow from "@/components/home/JarsRow";
 import Mission from "@/components/home/Mission";
@@ -16,7 +16,7 @@ export default function Goals() {
   const { data, t, lang, mode, speak } = useApp();
   const saved = data?.jars.reduce((s, j) => s + j.saved, 0) ?? 0;
   const goal = data?.jars.reduce((s, j) => s + j.goal, 0) ?? 0;
-  const progress = { hi: `Aapke Gullak mein ${inr(saved)} hain, lakshya ${inr(goal)}.`, en: `Your jars hold ${inr(saved)} of ${inr(goal)}.` };
+  const progress = useMemo(() => ({ hi: `Aapke Gullak mein ${inr(saved)} hain, lakshya ${inr(goal)}.`, en: `Your jars hold ${inr(saved)} of ${inr(goal)}.` }), [saved, goal]);
 
   // Shake the phone to hear jar progress.
   useEffect(() => {
